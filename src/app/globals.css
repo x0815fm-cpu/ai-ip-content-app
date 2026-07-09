@@ -605,11 +605,21 @@ button {
 
 .xiaoguang-button {
   display: block;
-  width: 65px;
-  height: 86px;
+  width: 56px;
+  height: 56px;
   padding: 0;
+  border-radius: 50%;
   background: transparent;
-  filter: drop-shadow(0 10px 22px rgba(233, 173, 70, 0.34));
+  filter: drop-shadow(0 6px 16px rgba(233, 173, 70, 0.4));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.xiaoguang-button:active {
+  transform: scale(0.92);
+}
+
+.xiaoguang-button img {
+  border-radius: 50%;
 }
 
 .xiaoguang-pop {
