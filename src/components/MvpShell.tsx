@@ -571,7 +571,7 @@ function XiaoguangOrb({
         </section>
       ) : null}
       <button aria-label="打开小光" className="xiaoguang-button" onClick={onToggle} type="button">
-        <Image alt="小光" height={86} src="/images/xiaoguang-orb.png" width={65} />
+        <Image alt="小光" height={56} src="/images/xiaoguang-orb.png" width={56} />
       </button>
     </div>
   );
