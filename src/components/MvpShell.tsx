@@ -33,93 +33,128 @@ import {
   Wifi,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { questions, storyCategories } from "@/data/mockData";
-import type { AppView } from "@/types/app";
-
-type AnswerMap = Partial<Record<(typeof questions)[number]["id"], string>>;
+import {
+  feedbackOptions,
+  flowSteps,
+  mockDirections,
+  mockGeneratedContent,
+  mockStoryCards,
+  mockTopics,
+  questions,
+  storyCategories,
+} from "@/data/mockData";
+import { modelService } from "@/services/modelService";
+import type {
+  AnswerMap,
+  AppView,
+  DirectionRecommendation,
+  ExtractedStoryAsset,
+  GeneratedContent,
+  Question,
+  TopicRecommendation,
+} from "@/types/app";
 
 const materialIcons = [BriefcaseBusiness, BookOpen, Home, NotebookText, Palette, Coins, Heart, HelpCircle];
 const goalIcons = [Crown, CircleDollarSign, Users, NotebookText, MessageCircle, Heart];
 const channelIcons = [Video, ImageIcon, FileText, BookText, MessageCircle, HelpCircle];
 
-const directions = [
-  {
-    name: "普通人成长记录",
-    recommended: true,
-    points: ["这个方向讲什么：真实的成长过程与心路历程", "适合吸引谁：同样在迷茫、正在成长的人", "为什么适合你：你有真实经历，容易长期写"],
-  },
-  {
-    name: "经验分享型 IP",
-    recommended: false,
-    points: ["这个方向讲什么：把你的经验整理成方法", "适合吸引谁：想少走弯路的人", "为什么适合你：你有可迁移的经验与方法"],
-  },
-  {
-    name: "生活感悟表达",
-    recommended: false,
-    points: ["这个方向讲什么：对生活的观察与思考", "适合吸引谁：喜欢真实表达的人", "为什么适合你：你有细腻的感受与表达欲"],
-  },
-];
-
-const topics = [
-  {
-    title: "我为什么想开始做这件事",
-    recommended: true,
-    summary: "从动机出发，更容易引发共鸣，也能建立你的真实感。",
-  },
-  {
-    title: "这一路上我最大的一个改变",
-    recommended: false,
-    summary: "用一个具体改变，吸引读者继续了解你的故事。",
-  },
-  {
-    title: "如果重来一次，我会早点明白这件事",
-    recommended: false,
-    summary: "用反思和经验，给正在迷茫的人一点启发。",
-  },
-];
-
-const feedbacks = ["不够像我", "太官方了", "太长了", "换一种讲法"];
-
 export function MvpShell() {
   const [view, setView] = useState<AppView>("home");
-  const [questionPage, setQuestionPage] = useState<1 | 2>(1);
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  const [directions, setDirections] = useState<DirectionRecommendation[]>(mockDirections);
+  const [topics, setTopics] = useState<TopicRecommendation[]>(mockTopics);
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent>(mockGeneratedContent);
   const [selectedDirection, setSelectedDirection] = useState(0);
   const [selectedTopic, setSelectedTopic] = useState(0);
+  const [activeFeedback, setActiveFeedback] = useState("");
+  const [storyDraft, setStoryDraft] = useState("");
+  const [storyAsset, setStoryAsset] = useState<ExtractedStoryAsset | null>(null);
   const [xiaoguangOpen, setXiaoguangOpen] = useState(false);
 
   const progressIndex = useMemo(() => {
-    if (view === "questions") return questionPage === 1 ? 0 : 1;
-    if (view === "directions") return 2;
-    if (view === "topics") return 3;
-    if (view === "content") return 4;
-    return 0;
-  }, [questionPage, view]);
+    if (view === "questions") return 0;
+    if (view === "directions") return 1;
+    if (view === "topics") return 2;
+    if (view === "content") return 3;
+    return undefined;
+  }, [view]);
 
   function startFlow() {
-    setQuestionPage(1);
+    setQuestionIndex(0);
     setView("questions");
   }
 
-  function chooseAnswer(id: keyof AnswerMap, value: string) {
-    setAnswers((current) => ({ ...current, [id]: value }));
-    if (id === "materialSource") {
-      setQuestionPage(2);
+  async function chooseAnswer(id: Question["id"], value: string) {
+    const nextAnswers = { ...answers, [id]: value };
+    setAnswers(nextAnswers);
+
+    if (questionIndex < questions.length - 1) {
+      setQuestionIndex((current) => current + 1);
       return;
     }
-    if (id === "publishChannel") {
-      setView("directions");
-    }
+
+    const nextDirections = await modelService.generate<DirectionRecommendation[]>("recommend_direction", {
+      answers: nextAnswers,
+    });
+    setDirections(nextDirections);
+    setSelectedDirection(0);
+    setView("directions");
+  }
+
+  async function continueToTopics() {
+    const nextTopics = await modelService.generate<TopicRecommendation[]>("recommend_topic", {
+      answers,
+      selectedDirection: directions[selectedDirection],
+    });
+    setTopics(nextTopics);
+    setSelectedTopic(0);
+    setView("topics");
+  }
+
+  async function continueToContent() {
+    const nextContent = await modelService.generate<GeneratedContent>("generate_content", {
+      answers,
+      selectedDirection: directions[selectedDirection],
+      selectedTopic: topics[selectedTopic],
+    });
+    setGeneratedContent(nextContent);
+    setActiveFeedback("");
+    setView("content");
+  }
+
+  async function reviseContent(feedbackType: string) {
+    const revised = await modelService.generate<GeneratedContent>("revise_content", {
+      answers,
+      selectedDirection: directions[selectedDirection],
+      selectedTopic: topics[selectedTopic],
+      currentContent: generatedContent,
+      feedbackType,
+    });
+    setGeneratedContent(revised);
+    setActiveFeedback(feedbackType);
+  }
+
+  async function extractStoryAsset() {
+    const extracted = await modelService.generate<ExtractedStoryAsset>("extract_story_asset", {
+      input: storyDraft,
+      autoSaveEnabled: false,
+    });
+    setStoryAsset(extracted);
   }
 
   function goBack() {
     if (view === "home") return;
-    if (view === "questions" && questionPage === 2) {
-      setQuestionPage(1);
+    if (view === "questions") {
+      if (questionIndex > 0) {
+        setQuestionIndex((current) => current - 1);
+        return;
+      }
+      setView("home");
       return;
     }
     if (view === "directions") {
-      setQuestionPage(2);
+      setQuestionIndex(questions.length - 1);
       setView("questions");
       return;
     }
@@ -142,17 +177,19 @@ export function MvpShell() {
           {view === "home" ? <HomeScreen onStart={startFlow} onStory={() => setView("story")} /> : null}
           {view === "questions" ? (
             <QuestionScreen
-              answers={answers}
+              answer={answers[questions[questionIndex].id]}
               onBack={goBack}
               onChoose={chooseAnswer}
-              page={questionPage}
               progressIndex={progressIndex}
+              question={questions[questionIndex]}
+              questionIndex={questionIndex}
             />
           ) : null}
           {view === "directions" ? (
             <DirectionScreen
+              directions={directions}
               onBack={goBack}
-              onNext={() => setView("topics")}
+              onNext={continueToTopics}
               onSelect={setSelectedDirection}
               progressIndex={progressIndex}
               selected={selectedDirection}
@@ -161,16 +198,32 @@ export function MvpShell() {
           {view === "topics" ? (
             <TopicScreen
               onBack={goBack}
-              onNext={() => setView("content")}
+              onNext={continueToContent}
               onSelect={setSelectedTopic}
               progressIndex={progressIndex}
               selected={selectedTopic}
+              topics={topics}
             />
           ) : null}
-          {view === "content" ? <ContentScreen onBack={goBack} onStory={() => setView("story")} /> : null}
+          {view === "content" ? (
+            <ContentScreen
+              activeFeedback={activeFeedback}
+              content={generatedContent}
+              onBack={goBack}
+              onFeedback={reviseContent}
+              onStory={() => setView("story")}
+            />
+          ) : null}
           {view === "story" ? <StoryScreen onBack={goBack} /> : null}
         </div>
-        <XiaoguangOrb open={xiaoguangOpen} onToggle={() => setXiaoguangOpen((value) => !value)} />
+        <XiaoguangOrb
+          draft={storyDraft}
+          onDraftChange={setStoryDraft}
+          onExtract={extractStoryAsset}
+          onToggle={() => setXiaoguangOpen((value) => !value)}
+          open={xiaoguangOpen}
+          storyAsset={storyAsset}
+        />
       </section>
     </main>
   );
@@ -192,8 +245,8 @@ function StatusBar() {
 function ProgressDots({ active }: { active: number }) {
   return (
     <div className="progress-dots" aria-label="流程进度">
-      {[0, 1, 2].map((item) => (
-        <span className={item === active ? "active" : ""} key={item} />
+      {flowSteps.map((step, index) => (
+        <span aria-label={step} className={index === active ? "active" : ""} key={step} title={step} />
       ))}
     </div>
   );
@@ -205,7 +258,7 @@ function ScreenHeader({ onBack, progressIndex }: { onBack: () => void; progressI
       <button aria-label="返回" className="icon-button" onClick={onBack} type="button">
         <ArrowLeft size={20} />
       </button>
-      {typeof progressIndex === "number" ? <ProgressDots active={Math.min(progressIndex, 2)} /> : <span />}
+      {typeof progressIndex === "number" ? <ProgressDots active={progressIndex} /> : <span />}
       <span className="h-9 w-9" />
     </header>
   );
@@ -225,7 +278,7 @@ function HomeScreen({ onStart, onStory }: { onStart: () => void; onStory: () => 
       </header>
 
       <div className="hero-visual">
-        <Image alt="温暖的客厅场景" fill priority src="/images/home-scene.png" sizes="320px" />
+        <Image alt="温暖的客厅场景" fill priority sizes="320px" src="/images/home-scene.png" />
         <div className="hero-copy">
           <h1>嘿，你来了</h1>
           <p>今天先帮你生成一条能发出去的内容文案</p>
@@ -248,90 +301,37 @@ function HomeScreen({ onStart, onStory }: { onStart: () => void; onStory: () => 
 }
 
 function QuestionScreen({
-  answers,
+  answer,
   onBack,
   onChoose,
-  page,
   progressIndex,
+  question,
+  questionIndex,
 }: {
-  answers: AnswerMap;
+  answer?: string;
   onBack: () => void;
-  onChoose: (id: keyof AnswerMap, value: string) => void;
-  page: 1 | 2;
-  progressIndex: number;
+  onChoose: (id: Question["id"], value: string) => void;
+  progressIndex?: number;
+  question: Question;
+  questionIndex: number;
 }) {
-  const firstQuestion = questions[0];
-  const secondQuestion = questions[1];
-  const thirdQuestion = questions[2];
-
-  if (page === 1) {
-    return (
-      <section className="screen-pad">
-        <ScreenHeader onBack={onBack} progressIndex={progressIndex} />
-        <div className="center-title">
-          <h2>{firstQuestion.title}</h2>
-          <p>{firstQuestion.helper}</p>
-        </div>
-        <div className="choice-grid">
-          {firstQuestion.options.map((option, index) => {
-            const Icon = materialIcons[index] ?? Sparkles;
-            return (
-              <button className="choice-tile" key={option} onClick={() => onChoose(firstQuestion.id, option)} type="button">
-                <Icon size={22} />
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-    );
-  }
+  const iconSet = question.id === "materialSource" ? materialIcons : question.id === "contentGoal" ? goalIcons : channelIcons;
 
   return (
     <section className="screen-pad">
       <ScreenHeader onBack={onBack} progressIndex={progressIndex} />
-      <QuestionBlock
-        answers={answers}
-        icons={goalIcons}
-        onChoose={onChoose}
-        question={secondQuestion}
-      />
-      <QuestionBlock
-        answers={answers}
-        icons={channelIcons}
-        onChoose={onChoose}
-        question={thirdQuestion}
-      />
-    </section>
-  );
-}
-
-function QuestionBlock({
-  answers,
-  icons,
-  onChoose,
-  question,
-}: {
-  answers: AnswerMap;
-  icons: typeof materialIcons;
-  onChoose: (id: keyof AnswerMap, value: string) => void;
-  question: (typeof questions)[number];
-}) {
-  return (
-    <section className="question-card">
-      <h2>{question.title}</h2>
-      <div className="mini-choice-grid">
+      <div className="center-title">
+        <span className="question-kicker">问题 {questionIndex + 1} / 3</span>
+        <h2>{question.title}</h2>
+        <p>{question.helper}</p>
+      </div>
+      <div className="choice-grid">
         {question.options.map((option, index) => {
-          const Icon = icons[index] ?? Sparkles;
-          const active = answers[question.id] === option;
+          const Icon = iconSet[index] ?? Sparkles;
+          const active = answer === option;
           return (
-            <button
-              className={`mini-choice ${active ? "selected" : ""}`}
-              key={option}
-              onClick={() => onChoose(question.id, option)}
-              type="button"
-            >
-              <Icon size={18} />
+            <button className={`choice-tile ${active ? "selected" : ""}`} key={option} onClick={() => onChoose(question.id, option)} type="button">
+              <Icon size={22} />
               {option}
             </button>
           );
@@ -342,16 +342,18 @@ function QuestionBlock({
 }
 
 function DirectionScreen({
+  directions,
   onBack,
   onNext,
   onSelect,
   progressIndex,
   selected,
 }: {
+  directions: DirectionRecommendation[];
   onBack: () => void;
   onNext: () => void;
   onSelect: (index: number) => void;
-  progressIndex: number;
+  progressIndex?: number;
   selected: number;
 }) {
   return (
@@ -377,9 +379,9 @@ function DirectionScreen({
               {direction.recommended ? <span className="fit-badge">更适合你</span> : null}
             </div>
             <ul>
-              {direction.points.map((point) => (
-                <li key={point}>{point}</li>
-              ))}
+              <li>这个方向讲什么：{direction.whatToTalkAbout}</li>
+              <li>适合吸引谁：{direction.targetAudience}</li>
+              <li>为什么适合你：{direction.whyFitYou}</li>
             </ul>
             <Star className="corner-star" size={17} />
           </button>
@@ -398,12 +400,14 @@ function TopicScreen({
   onSelect,
   progressIndex,
   selected,
+  topics,
 }: {
   onBack: () => void;
   onNext: () => void;
   onSelect: (index: number) => void;
-  progressIndex: number;
+  progressIndex?: number;
   selected: number;
+  topics: TopicRecommendation[];
 }) {
   return (
     <section className="screen-pad">
@@ -426,6 +430,7 @@ function TopicScreen({
                 {topic.recommended ? <span className="fit-badge">更适合你</span> : null}
               </div>
               <p>{topic.summary}</p>
+              <p className="why-first">为什么适合作为第一条：{topic.whyFirst}</p>
             </div>
             {selected === index ? <CheckCircle2 size={22} /> : <Circle size={22} />}
           </button>
@@ -438,38 +443,43 @@ function TopicScreen({
   );
 }
 
-function ContentScreen({ onBack, onStory }: { onBack: () => void; onStory: () => void }) {
-  const contentRows = [
-    ["标题", "我为什么想开始做这件事"],
-    ["开头", "很多人问我，为什么突然开始做内容？其实，一开始我也没想那么多。"],
-    ["正文", "真正开始的契机，是我发现很多经历如果不被记录，就会慢慢散掉。"],
-    ["结尾", "如果你也有想做但一直没开始的事，先从第一句话开始。"],
-  ];
-
+function ContentScreen({
+  activeFeedback,
+  content,
+  onBack,
+  onFeedback,
+  onStory,
+}: {
+  activeFeedback: string;
+  content: GeneratedContent;
+  onBack: () => void;
+  onFeedback: (feedbackType: string) => void;
+  onStory: () => void;
+}) {
   return (
     <section className="screen-pad content-screen">
-      <ScreenHeader onBack={onBack} />
+      <ScreenHeader onBack={onBack} progressIndex={3} />
       <div className="top-title">
         <h2>这是你的第一条内容文案</h2>
         <p>你可以直接发布，或根据建议优化</p>
       </div>
       <article className="content-card">
-        {contentRows.map(([label, value]) => (
-          <div className="content-row" key={label}>
-            <span>{label}</span>
-            <p>{value}</p>
+        {content.rows.map((row) => (
+          <div className="content-row" key={row.label}>
+            <span>{row.label}</span>
+            <p>{row.value}</p>
           </div>
         ))}
         <div className="content-row">
           <span>拍摄提示 / 发布建议</span>
-          <p>口播更自然，建议站在窗边自然光处拍；发布时搭配真实日常画面或手写卡片。</p>
+          <p>{content.publishHint}</p>
         </div>
       </article>
       <div className="feedback-panel">
-        <p>这条内容怎么样？</p>
+        <p>{activeFeedback ? `已根据“${activeFeedback}”改写` : "这条内容怎么样？"}</p>
         <div className="feedback-grid">
-          {feedbacks.map((feedback) => (
-            <button key={feedback} type="button">
+          {feedbackOptions.map((feedback) => (
+            <button className={activeFeedback === feedback ? "active" : ""} key={feedback} onClick={() => onFeedback(feedback)} type="button">
               {feedback}
             </button>
           ))}
@@ -484,13 +494,6 @@ function ContentScreen({ onBack, onStory }: { onBack: () => void; onStory: () =>
 }
 
 function StoryScreen({ onBack }: { onBack: () => void }) {
-  const cards = [
-    ["从职场小白到独当一面", "工作 / 职业", "2024.05.12", 12],
-    ["第一次带娃的手忙脚乱", "亲子记录", "2023.11.03", 28],
-    ["坚持读书的第 100 天", "自我提升", "2024.02.20", 15],
-    ["摸摸索索做 IP 的第一周", "副业尝试", "2024.04.18", 19],
-  ];
-
   return (
     <section className="screen-pad story-screen">
       <ScreenHeader onBack={onBack} />
@@ -512,16 +515,16 @@ function StoryScreen({ onBack }: { onBack: () => void }) {
           ))}
         </div>
         <div className="story-list">
-          {cards.map(([title, tag, date, count]) => (
-            <article className="story-card" key={title}>
+          {mockStoryCards.map((card) => (
+            <article className="story-card" key={card.title}>
               <div className="story-card-head">
-                <h4>{title}</h4>
-                <time>{date}</time>
+                <h4>{card.title}</h4>
+                <time>{card.date}</time>
               </div>
-              <p>从普通生活里提取真实内容，把经历变成可以继续表达的素材...</p>
+              <p>{card.summary}</p>
               <div className="story-card-foot">
-                <span>{tag}</span>
-                <span>☆ {count}</span>
+                <span>{card.tag}</span>
+                <span>☆ {card.count}</span>
               </div>
             </article>
           ))}
@@ -532,7 +535,21 @@ function StoryScreen({ onBack }: { onBack: () => void }) {
   );
 }
 
-function XiaoguangOrb({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+function XiaoguangOrb({
+  draft,
+  onDraftChange,
+  onExtract,
+  onToggle,
+  open,
+  storyAsset,
+}: {
+  draft: string;
+  onDraftChange: (value: string) => void;
+  onExtract: () => void;
+  onToggle: () => void;
+  open: boolean;
+  storyAsset: ExtractedStoryAsset | null;
+}) {
   return (
     <div className="xiaoguang-wrap">
       {open ? (
@@ -540,11 +557,50 @@ function XiaoguangOrb({ open, onToggle }: { open: boolean; onToggle: () => void 
           <strong>小光</strong>
           <p>想起什么，都可以跟我说。</p>
           <p className="muted">你愿意留下来的内容，我会帮你整理成故事卡。</p>
+          <textarea
+            className="xiaoguang-input"
+            onChange={(event) => onDraftChange(event.target.value)}
+            placeholder="比如：我最近想开始做内容，但一直不知道第一条该发什么..."
+            rows={3}
+            value={draft}
+          />
+          <button className="xiaoguang-save" onClick={onExtract} type="button">
+            沉淀成故事卡
+          </button>
+          {storyAsset ? <StoryAssetCard storyAsset={storyAsset} /> : null}
         </section>
       ) : null}
       <button aria-label="打开小光" className="xiaoguang-button" onClick={onToggle} type="button">
         <Image alt="小光" height={86} src="/images/xiaoguang-orb.png" width={65} />
       </button>
     </div>
+  );
+}
+
+function StoryAssetCard({ storyAsset }: { storyAsset: ExtractedStoryAsset }) {
+  return (
+    <article className="asset-card">
+      <h3>已沉淀到你的故事库</h3>
+      <section>
+        <strong>经历</strong>
+        <p>{storyAsset.experience.content}</p>
+      </section>
+      <section>
+        <strong>想法</strong>
+        <p>{storyAsset.thought.content}</p>
+      </section>
+      <section>
+        <strong>金句</strong>
+        <p>{storyAsset.quote.content}</p>
+      </section>
+      <section>
+        <strong>可生成选题</strong>
+        <ol>
+          {storyAsset.topics.map((topic) => (
+            <li key={topic.title}>{topic.title}</li>
+          ))}
+        </ol>
+      </section>
+    </article>
   );
 }
