@@ -26,7 +26,7 @@ async function generate<TResponse = unknown>(taskType: TaskType, payload: ModelP
     }
 
     throw new Error(result.error || "unknown_api_error");
-  } catch (error) {
+  } catch {
     // Client-side fallback: import mock data dynamically
     const { mockGenerate } = await import("@/services/providers/mockProvider");
     const fallback = mockGenerate<TResponse>(taskType, payload);
