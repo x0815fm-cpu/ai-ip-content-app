@@ -1,30 +1,36 @@
-import {
-  mockDirections,
-  mockExtractedStoryAsset,
-  mockGeneratedContent,
-  mockRevisedContent,
-  mockTopics,
-} from "@/data/mockData";
 import type { ModelPayload, TaskType } from "@/types/app";
 
+type GenerateApiResponse<T = unknown> = {
+  ok: boolean;
+  data?: T;
+  source: "deepseek" | "mock";
+  error?: string;
+};
+
 async function generate<TResponse = unknown>(taskType: TaskType, payload: ModelPayload): Promise<TResponse> {
-  switch (taskType) {
-    case "recommend_direction":
-      return mockDirections as TResponse;
-    case "recommend_topic":
-      return mockTopics as TResponse;
-    case "generate_content":
-      return mockGeneratedContent as TResponse;
-    case "revise_content":
-      return mockRevisedContent(payload) as TResponse;
-    case "extract_story_asset":
-      return mockExtractedStoryAsset(payload) as TResponse;
-    default:
-      return {
-        taskType,
-        payload,
-        source: "mock",
-      } as TResponse;
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskType, payload }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API responded with status ${response.status}`);
+    }
+
+    const result: GenerateApiResponse<TResponse> = await response.json();
+
+    if (result.ok && result.data !== undefined) {
+      return result.data;
+    }
+
+    throw new Error(result.error || "unknown_api_error");
+  } catch {
+    // Client-side fallback: import mock data dynamically
+    const { mockGenerate } = await import("@/services/providers/mockProvider");
+    const fallback = mockGenerate<TResponse>(taskType, payload);
+    return fallback.data;
   }
 }
 
