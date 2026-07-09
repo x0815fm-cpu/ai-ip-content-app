@@ -1,4 +1,5 @@
 import type { ModelPayload, TaskType } from "@/types/app";
+import { getSystemPrompt } from "@/services/prompts/promptRegistry";
 
 export type DeepSeekResponse<T = unknown> = {
   ok: boolean;
@@ -31,7 +32,7 @@ export async function deepseekGenerate<T = unknown>(
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant. Respond with valid JSON only. Task type: ${taskType}`,
+            content: getSystemPrompt(taskType),
           },
           {
             role: "user",
