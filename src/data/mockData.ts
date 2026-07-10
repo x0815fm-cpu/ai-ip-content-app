@@ -143,7 +143,7 @@ export function mockRevisedContent(payload: ModelPayload): GeneratedContent {
       if (row.label === "开头") {
         return {
           ...row,
-          value: `按“${feedbackType}”改了一版：我不是突然想做内容，而是发现有些经历如果一直放在心里，就永远不会变成别人能看见的东西。`,
+          value: `按"${feedbackType}"改了一版：我不是突然想做内容，而是发现有些经历如果一直放在心里，就永远不会变成别人能看见的东西。`,
         };
       }
       if (row.label === "正文") {

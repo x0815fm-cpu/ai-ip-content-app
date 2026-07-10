@@ -109,15 +109,20 @@ export function MvpShell() {
     setView("failure_story");
   }
 
-  async function continueToTopics() {
+  async function continueToTopics(input = failureStoryInput) {
     const nextTopics = await modelService.generate<TopicRecommendation[]>("recommend_topic", {
       answers,
       selectedDirection: directions[selectedDirection],
-      failureStoryInput,
+      failureStoryInput: input,
     });
     setTopics(nextTopics);
     setSelectedTopic(0);
     setView("topics");
+  }
+
+  function skipFailureStory() {
+    setFailureStoryInput("");
+    void continueToTopics("");
   }
 
   async function continueToContent() {
@@ -214,7 +219,8 @@ export function MvpShell() {
               input={failureStoryInput}
               onChange={setFailureStoryInput}
               onBack={goBack}
-              onNext={continueToTopics}
+              onSkip={skipFailureStory}
+              onContinue={() => void continueToTopics()}
               progressIndex={progressIndex}
             />
           ) : null}
@@ -421,13 +427,15 @@ function FailureStoryInputScreen({
   input,
   onChange,
   onBack,
-  onNext,
+  onSkip,
+  onContinue,
   progressIndex,
 }: {
   input: string;
   onChange: (value: string) => void;
   onBack: () => void;
-  onNext: () => void;
+  onSkip: () => void;
+  onContinue: () => void;
   progressIndex?: number;
 }) {
   return (
@@ -444,10 +452,10 @@ function FailureStoryInputScreen({
           value={input}
         />
         <div className="failure-story-actions">
-          <button className="bottom-secondary failure-story-skip" onClick={onNext} type="button">
+          <button className="bottom-secondary failure-story-skip" onClick={onSkip} type="button">
             暂时跳过
           </button>
-          <button className="bottom-primary failure-story-continue" onClick={onNext} type="button">
+          <button className="bottom-primary failure-story-continue" onClick={onContinue} type="button">
             继续找选题
           </button>
         </div>
