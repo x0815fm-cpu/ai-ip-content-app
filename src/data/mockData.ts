@@ -30,7 +30,7 @@ export const questions: Question[] = [
   },
 ];
 
-export const flowSteps = ["选择题", "方向", "选题", "文案"];
+export const flowSteps = ["选择题", "方向", "故事", "选题", "文案"];
 
 export const mockDirections: DirectionRecommendation[] = [
   {
