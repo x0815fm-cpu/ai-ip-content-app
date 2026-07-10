@@ -261,8 +261,14 @@ recommended: true
 type RecommendTopicPayload = {
   answers: AnswerMap;
   selectedDirection: DirectionRecommendation;
+  failureStoryInput?: string;
 };
 ```
+
+**说明：**
+- 有故事时（failureStoryInput 非空），优先围绕真实故事推荐选题
+- 无故事时（failureStoryInput 为空或不存在），基于答案和方向推荐具体起步选题
+- 不得虚构用户未提供的经历
 
 ### 8.3 输出
 
