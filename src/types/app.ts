@@ -1,4 +1,11 @@
-export type AppView = "home" | "questions" | "directions" | "topics" | "content" | "story";
+export type AppView =
+  | "home"
+  | "questions"
+  | "directions"
+  | "failure_story"
+  | "topics"
+  | "content"
+  | "story";
 
 export type TaskType =
   | "collect_profile"

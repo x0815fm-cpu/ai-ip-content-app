@@ -71,17 +71,20 @@ export function MvpShell() {
   const [storyDraft, setStoryDraft] = useState("");
   const [storyAsset, setStoryAsset] = useState<ExtractedStoryAsset | null>(null);
   const [xiaoguangOpen, setXiaoguangOpen] = useState(false);
+  const [failureStoryInput, setFailureStoryInput] = useState("");
 
   const progressIndex = useMemo(() => {
     if (view === "questions") return 0;
     if (view === "directions") return 1;
-    if (view === "topics") return 2;
-    if (view === "content") return 3;
+    if (view === "failure_story") return 2;
+    if (view === "topics") return 3;
+    if (view === "content") return 4;
     return undefined;
   }, [view]);
 
   function startFlow() {
     setQuestionIndex(0);
+    setFailureStoryInput("");
     setView("questions");
   }
 
@@ -102,14 +105,24 @@ export function MvpShell() {
     setView("directions");
   }
 
-  async function continueToTopics() {
+  function continueToFailureStory() {
+    setView("failure_story");
+  }
+
+  async function continueToTopics(input = failureStoryInput) {
     const nextTopics = await modelService.generate<TopicRecommendation[]>("recommend_topic", {
       answers,
       selectedDirection: directions[selectedDirection],
+      failureStoryInput: input,
     });
     setTopics(nextTopics);
     setSelectedTopic(0);
     setView("topics");
+  }
+
+  function skipFailureStory() {
+    setFailureStoryInput("");
+    void continueToTopics("");
   }
 
   async function continueToContent() {
@@ -117,6 +130,7 @@ export function MvpShell() {
       answers,
       selectedDirection: directions[selectedDirection],
       selectedTopic: topics[selectedTopic],
+      failureStoryInput,
     });
     setGeneratedContent(nextContent);
     setActiveFeedback("");
@@ -130,6 +144,7 @@ export function MvpShell() {
       selectedTopic: topics[selectedTopic],
       currentContent: generatedContent,
       feedbackType,
+      failureStoryInput,
     });
     setGeneratedContent(revised);
     setActiveFeedback(feedbackType);
@@ -158,8 +173,12 @@ export function MvpShell() {
       setView("questions");
       return;
     }
-    if (view === "topics") {
+    if (view === "failure_story") {
       setView("directions");
+      return;
+    }
+    if (view === "topics") {
+      setView("failure_story");
       return;
     }
     if (view === "content") {
@@ -189,10 +208,20 @@ export function MvpShell() {
             <DirectionScreen
               directions={directions}
               onBack={goBack}
-              onNext={continueToTopics}
+              onNext={continueToFailureStory}
               onSelect={setSelectedDirection}
               progressIndex={progressIndex}
               selected={selectedDirection}
+            />
+          ) : null}
+          {view === "failure_story" ? (
+            <FailureStoryInputScreen
+              input={failureStoryInput}
+              onChange={setFailureStoryInput}
+              onBack={goBack}
+              onSkip={skipFailureStory}
+              onContinue={() => void continueToTopics()}
+              progressIndex={progressIndex}
             />
           ) : null}
           {view === "topics" ? (
@@ -394,6 +423,47 @@ function DirectionScreen({
   );
 }
 
+function FailureStoryInputScreen({
+  input,
+  onChange,
+  onBack,
+  onSkip,
+  onContinue,
+  progressIndex,
+}: {
+  input: string;
+  onChange: (value: string) => void;
+  onBack: () => void;
+  onSkip: () => void;
+  onContinue: () => void;
+  progressIndex?: number;
+}) {
+  return (
+    <section className="screen-pad">
+      <ScreenHeader onBack={onBack} progressIndex={progressIndex} />
+      <div className="failure-story-screen">
+        <h2 className="failure-story-title">想起一次你真的觉得自己不行了的时候</h2>
+        <p className="failure-story-helper">不用讲得很完整。写下当时发生了什么，以及你心里最真实的感受。</p>
+        <textarea
+          className="failure-story-input"
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="比如：那段时间我每天都很累，开始怀疑自己是不是根本做不到……"
+          rows={6}
+          value={input}
+        />
+        <div className="failure-story-actions">
+          <button className="bottom-secondary failure-story-skip" onClick={onSkip} type="button">
+            暂时跳过
+          </button>
+          <button className="bottom-primary failure-story-continue" onClick={onContinue} type="button">
+            继续找选题
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TopicScreen({
   onBack,
   onNext,
@@ -458,7 +528,7 @@ function ContentScreen({
 }) {
   return (
     <section className="screen-pad content-screen">
-      <ScreenHeader onBack={onBack} progressIndex={3} />
+      <ScreenHeader onBack={onBack} progressIndex={4} />
       <div className="top-title">
         <h2>这是你的第一条内容文案</h2>
         <p>你可以直接发布，或根据建议优化</p>
