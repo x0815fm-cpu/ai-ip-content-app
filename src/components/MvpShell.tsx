@@ -126,15 +126,30 @@ export function MvpShell() {
   }
 
   async function continueToContent() {
-    const nextContent = await modelService.generate<GeneratedContent>("generate_content", {
-      answers,
-      selectedDirection: directions[selectedDirection],
-      selectedTopic: topics[selectedTopic],
-      failureStoryInput,
-    });
-    setGeneratedContent(nextContent);
-    setActiveFeedback("");
-    setView("content");
+    try {
+      const nextContent = await modelService.generate<GeneratedContent>("generate_content", {
+        answers,
+        selectedDirection: directions[selectedDirection],
+        selectedTopic: topics[selectedTopic],
+        failureStoryInput,
+      });
+      
+      // Safety check: ensure nextContent has the expected structure
+      if (!nextContent || !Array.isArray(nextContent.rows) || nextContent.rows.length === 0) {
+        // Use mock data as fallback
+        setGeneratedContent(mockGeneratedContent);
+      } else {
+        setGeneratedContent(nextContent);
+      }
+      
+      setActiveFeedback("");
+      setView("content");
+    } catch {
+      // Any exception, use mock data as fallback
+      setGeneratedContent(mockGeneratedContent);
+      setActiveFeedback("");
+      setView("content");
+    }
   }
 
   async function reviseContent(feedbackType: string) {
