@@ -526,6 +526,10 @@ function ContentScreen({
   onFeedback: (feedbackType: string) => void;
   onStory: () => void;
 }) {
+  // Safety check: ensure content has the expected structure
+  const rows = content?.rows ?? [];
+  const publishHint = content?.publishHint ?? "";
+
   return (
     <section className="screen-pad content-screen">
       <ScreenHeader onBack={onBack} progressIndex={4} />
@@ -534,16 +538,18 @@ function ContentScreen({
         <p>你可以直接发布，或根据建议优化</p>
       </div>
       <article className="content-card">
-        {content.rows.map((row) => (
+        {rows.map((row) => (
           <div className="content-row" key={row.label}>
             <span>{row.label}</span>
             <p>{row.value}</p>
           </div>
         ))}
-        <div className="content-row">
-          <span>拍摄提示 / 发布建议</span>
-          <p>{content.publishHint}</p>
-        </div>
+        {publishHint && (
+          <div className="content-row">
+            <span>拍摄提示 / 发布建议</span>
+            <p>{publishHint}</p>
+          </div>
+        )}
       </article>
       <div className="feedback-panel">
         <p>{activeFeedback ? `已根据“${activeFeedback}”改写` : "这条内容怎么样？"}</p>
