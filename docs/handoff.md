@@ -10,6 +10,7 @@
 
 - `docs/product/app-project-context.md`
 - `docs/reviews/pr-09-acceptance.md`
+- `docs/reviews/production-v1-video-review.md`
 - 当前开放 PR 与最新代码
 
 不要在聊天中重复粘贴长篇背景。
@@ -17,23 +18,22 @@
 ## 当前状态
 
 - PR #7、#8、#9 已进入 `main`。
-- 第一条内容生成主流程已跑通并完成验收。
-- 有失败故事与跳过故事时均可返回真实 DeepSeek 内容。
-- 无 API Key 时可降级为 mock，页面不白屏。
-- 当前外部预览仍是临时 localtunnel 地址。
+- 第一条内容生成主流程已跑通。
+- Vercel 正式域名已上线：`https://ai-ip-content-app.vercel.app`
+- 真机录屏评审已完成。
+- 当前版本仍像演示原型，存在真机适配、选题与成稿不一致、假故事库和假保存等 P0 信任问题。
 
 ## 下一步唯一任务
 
-把 `main` 部署到一个稳定、外部可访问的网页地址。
+完成：
 
-验收要求：
+`Production V1 P0 Trust Fix`
 
-- 用户可直接打开，不依赖本机进程或临时隧道。
-- 从首页完整走通到最终文案页。
-- 部署后真实路径仍返回 `source === "deepseek"`。
-- 部署失败时页面仍可安全降级，不白屏。
+具体问题与验收标准统一读取：
 
-稳定部署完成前，不推进 PR #10 或其他新功能。
+`docs/reviews/production-v1-video-review.md`
+
+本轮只修当前主流程的可信度和真机可用性，不新增功能，不推进数据库、长期记忆或复杂 Agent。
 
 ## 固定协作方式
 
