@@ -1,7 +1,7 @@
 # PR-09 验收指南
 
 PR 链接：https://github.com/x0815fm-cpu/ai-ip-content-app/pull/9  
-Commit：59de850  
+Commit：1a29d31  
 分支：feat/generate-content-prompt-v1
 
 ---
@@ -53,6 +53,61 @@ Commit：59de850
 
 **验证点：**
 - ✅ Network 响应 `source === "mock"`
+- ✅ 页面正常展示 mock 文案
+
+---
+
+## 实际验收结果（2026-07-11 测试）
+
+### 场景 A：有失败故事 ✅
+
+**API 响应：**
+```json
+{
+  "source": "deepseek",
+  "rowsCount": 4,
+  "hasPublishHint": true
+}
+```
+
+**结果：**
+- ✅ source === "deepseek"
+- ✅ 返回 4 个 rows（标题、开头、正文、结尾）
+- ✅ publishHint 非空
+- ✅ 文案基于真实失败故事生成
+
+### 场景 B：空失败故事 ✅
+
+**API 响应：**
+```json
+{
+  "source": "deepseek",
+  "rowsCount": 4,
+  "hasPublishHint": true
+}
+```
+
+**结果：**
+- ✅ source === "deepseek"
+- ✅ 返回 4 个 rows（标题、开头、正文、结尾）
+- ✅ publishHint 非空
+- ✅ 文案围绕方向/目标/动机生成，未虚构经历
+
+### 场景 C：无 API Key（Mock 模式）✅
+
+**API 响应：**
+```json
+{
+  "source": "mock",
+  "rowsCount": 4,
+  "hasPublishHint": true
+}
+```
+
+**结果：**
+- ✅ source === "mock"
+- ✅ 返回 4 个 rows（标题、开头、正文、结尾）
+- ✅ publishHint 非空
 - ✅ 页面正常展示 mock 文案
 
 ---
