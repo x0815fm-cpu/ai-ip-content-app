@@ -680,6 +680,16 @@ function XiaoguangOrb({
 }
 
 function StoryAssetCard({ storyAsset }: { storyAsset: ExtractedStoryAsset }) {
+  // Safety check: ensure storyAsset has the expected structure
+  if (!storyAsset || !storyAsset.experience || !storyAsset.thought || !storyAsset.quote || !storyAsset.topics) {
+    return (
+      <article className="asset-card">
+        <h3>故事资产生成遇到问题</h3>
+        <p>请返回重试。</p>
+      </article>
+    );
+  }
+
   return (
     <article className="asset-card">
       <h3>已沉淀到你的故事库</h3>
@@ -698,9 +708,13 @@ function StoryAssetCard({ storyAsset }: { storyAsset: ExtractedStoryAsset }) {
       <section>
         <strong>可生成选题</strong>
         <ol>
-          {storyAsset.topics.map((topic) => (
-            <li key={topic.title}>{topic.title}</li>
-          ))}
+          {Array.isArray(storyAsset.topics) && storyAsset.topics.length > 0 ? (
+            storyAsset.topics.map((topic) => (
+              <li key={topic.title}>{topic.title}</li>
+            ))
+          ) : (
+            <li>暂无选题</li>
+          )}
         </ol>
       </section>
     </article>
