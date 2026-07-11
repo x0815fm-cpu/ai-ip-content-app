@@ -1,7 +1,7 @@
 # PR-09 验收指南
 
 PR 链接：https://github.com/x0815fm-cpu/ai-ip-content-app/pull/9  
-Commit：1a29d31  
+Commit：8a02030  
 分支：feat/generate-content-prompt-v1
 
 ---
