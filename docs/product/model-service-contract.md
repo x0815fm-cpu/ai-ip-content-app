@@ -315,6 +315,7 @@ type GenerateContentPayload = {
   answers: AnswerMap;
   selectedDirection: DirectionRecommendation;
   selectedTopic: TopicRecommendation;
+  failureStoryInput?: string;
 };
 ```
 

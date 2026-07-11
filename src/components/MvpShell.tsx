@@ -71,6 +71,7 @@ export function MvpShell() {
   const [storyDraft, setStoryDraft] = useState("");
   const [storyAsset, setStoryAsset] = useState<ExtractedStoryAsset | null>(null);
   const [xiaoguangOpen, setXiaoguangOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [failureStoryInput, setFailureStoryInput] = useState("");
 
   const progressIndex = useMemo(() => {
@@ -126,6 +127,8 @@ export function MvpShell() {
   }
 
   async function continueToContent() {
+    setIsGenerating(true);
+    
     try {
       const nextContent = await modelService.generate<GeneratedContent>("generate_content", {
         answers,
@@ -149,6 +152,8 @@ export function MvpShell() {
       setGeneratedContent(mockGeneratedContent);
       setActiveFeedback("");
       setView("content");
+    } finally {
+      setIsGenerating(false);
     }
   }
 
@@ -241,6 +246,7 @@ export function MvpShell() {
           ) : null}
           {view === "topics" ? (
             <TopicScreen
+              isGenerating={isGenerating}
               onBack={goBack}
               onNext={continueToContent}
               onSelect={setSelectedTopic}
@@ -480,6 +486,7 @@ function FailureStoryInputScreen({
 }
 
 function TopicScreen({
+  isGenerating,
   onBack,
   onNext,
   onSelect,
@@ -487,6 +494,7 @@ function TopicScreen({
   selected,
   topics,
 }: {
+  isGenerating: boolean;
   onBack: () => void;
   onNext: () => void;
   onSelect: (index: number) => void;
@@ -521,8 +529,8 @@ function TopicScreen({
           </button>
         ))}
       </div>
-      <button className="bottom-primary" onClick={onNext} type="button">
-        生成内容文案
+      <button className="bottom-primary" onClick={onNext} type="button" disabled={isGenerating}>
+        {isGenerating ? "小光正在整理你的第一条内容……" : "生成内容文案"}
       </button>
     </section>
   );
@@ -676,6 +684,16 @@ function XiaoguangOrb({
 }
 
 function StoryAssetCard({ storyAsset }: { storyAsset: ExtractedStoryAsset }) {
+  // Safety check: ensure storyAsset has the expected structure
+  if (!storyAsset || !storyAsset.experience || !storyAsset.thought || !storyAsset.quote || !storyAsset.topics) {
+    return (
+      <article className="asset-card">
+        <h3>故事资产生成遇到问题</h3>
+        <p>请返回重试。</p>
+      </article>
+    );
+  }
+
   return (
     <article className="asset-card">
       <h3>已沉淀到你的故事库</h3>
@@ -694,9 +712,13 @@ function StoryAssetCard({ storyAsset }: { storyAsset: ExtractedStoryAsset }) {
       <section>
         <strong>可生成选题</strong>
         <ol>
-          {storyAsset.topics.map((topic) => (
-            <li key={topic.title}>{topic.title}</li>
-          ))}
+          {Array.isArray(storyAsset.topics) && storyAsset.topics.length > 0 ? (
+            storyAsset.topics.map((topic) => (
+              <li key={topic.title}>{topic.title}</li>
+            ))
+          ) : (
+            <li>暂无选题</li>
+          )}
         </ol>
       </section>
     </article>
