@@ -127,6 +127,8 @@ export function MvpShell() {
   }
 
   async function continueToContent() {
+    setIsGenerating(true);
+    
     try {
       const nextContent = await modelService.generate<GeneratedContent>("generate_content", {
         answers,
@@ -150,6 +152,8 @@ export function MvpShell() {
       setGeneratedContent(mockGeneratedContent);
       setActiveFeedback("");
       setView("content");
+    } finally {
+      setIsGenerating(false);
     }
   }
 
