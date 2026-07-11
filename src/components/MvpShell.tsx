@@ -3,7 +3,6 @@
 import Image from "next/image";
 import {
   ArrowLeft,
-  Battery,
   BookOpen,
   BookText,
   BriefcaseBusiness,
@@ -25,12 +24,10 @@ import {
   Palette,
   PenLine,
   Search,
-  Signal,
   Sparkles,
   Star,
   Users,
   Video,
-  Wifi,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -38,7 +35,6 @@ import {
   flowSteps,
   mockDirections,
   mockGeneratedContent,
-  mockStoryCards,
   mockTopics,
   questions,
   storyCategories,
@@ -292,19 +288,6 @@ export function MvpShell() {
         />
       </section>
     </main>
-  );
-}
-
-function StatusBar() {
-  return (
-    <div className="status-bar">
-      <span>9:41</span>
-      <div className="flex items-center gap-1.5">
-        <Signal size={14} strokeWidth={2.4} />
-        <Wifi size={14} strokeWidth={2.4} />
-        <Battery size={17} strokeWidth={2.4} />
-      </div>
-    </div>
   );
 }
 
@@ -628,7 +611,6 @@ function StoryScreen({ onBack }: { onBack: () => void }) {
       <ScreenHeader onBack={onBack} />
       <div className="story-title">
         <h2>我的故事库</h2>
-        <span>预览</span>
         <p>你的经历、想法与灵感，都会在这里沉淀</p>
       </div>
       <section className="story-board">
@@ -643,20 +625,11 @@ function StoryScreen({ onBack }: { onBack: () => void }) {
             </button>
           ))}
         </div>
-        <div className="story-list">
-          {mockStoryCards.map((card) => (
-            <article className="story-card" key={card.title}>
-              <div className="story-card-head">
-                <h4>{card.title}</h4>
-                <time>{card.date}</time>
-              </div>
-              <p>{card.summary}</p>
-              <div className="story-card-foot">
-                <span>{card.tag}</span>
-                <span>☆ {card.count}</span>
-              </div>
-            </article>
-          ))}
+        <div className="story-list story-list-empty">
+          <div className="story-empty-state">
+            <p>这里还没有内容</p>
+            <p className="story-empty-hint">完成一次内容生成后，点击&quot;沉淀到故事库&quot;，你的故事就会出现在这里。</p>
+          </div>
         </div>
       </section>
       <div className="story-quote">每一次记录，都是在为未来的你积累力量。</div>
