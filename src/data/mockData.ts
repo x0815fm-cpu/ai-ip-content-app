@@ -135,21 +135,27 @@ export const mockStoryCards: StoryLibraryCard[] = [
 ];
 
 export function mockRevisedContent(payload: ModelPayload): GeneratedContent {
-  const feedbackType = typeof payload.feedbackType === "string" ? payload.feedbackType : "反馈";
+  const feedbackType = typeof payload.feedbackType === “string” ? payload.feedbackType : “反馈”;
   return {
     ...mockGeneratedContent,
     revisedBy: feedbackType,
     rows: mockGeneratedContent.rows.map((row) => {
-      if (row.label === "开头") {
+      if (row.label === “开头”) {
         return {
           ...row,
-          value: `按“${feedbackType}”改了一版：我不是突然想做内容，而是发现有些经历如果一直放在心里，就永远不会变成别人能看见的东西。`,
+          value: “我不是突然想做内容，而是发现有些经历如果一直放在心里，就永远不会变成别人能看见的东西。”,
         };
       }
-      if (row.label === "正文") {
+      if (row.label === “正文”) {
         return {
           ...row,
-          value: "这一版会更轻、更像一个普通人在认真讲自己的开始。先不急着证明什么，只把那个真正让你想行动的瞬间讲出来。",
+          value: “我开始认真记录工作中的点滴，不是为了证明什么，只是想把那些真实的感受留下来。每一个小小的记录，都是在为未来的自己积累力量。”,
+        };
+      }
+      if (row.label === “结尾”) {
+        return {
+          ...row,
+          value: “如果你也有想记录但一直没开始的时刻，不妨从今天开始，写下第一个真实的瞬间。”,
         };
       }
       return row;
