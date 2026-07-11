@@ -599,7 +599,7 @@ function ContentScreen({
       </button>
       <button className="bottom-secondary" onClick={onStory} type="button">
         <Library size={17} />
-        沉淀到故事库
+        查看故事库
       </button>
     </section>
   );
@@ -628,7 +628,7 @@ function StoryScreen({ onBack }: { onBack: () => void }) {
         <div className="story-list story-list-empty">
           <div className="story-empty-state">
             <p>这里还没有内容</p>
-            <p className="story-empty-hint">完成一次内容生成后，点击&quot;沉淀到故事库&quot;，你的故事就会出现在这里。</p>
+            <p className="story-empty-hint">故事库功能正在准备中，当前生成的内容暂不会自动保存。</p>
           </div>
         </div>
       </section>
