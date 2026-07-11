@@ -71,6 +71,7 @@ export function MvpShell() {
   const [storyDraft, setStoryDraft] = useState("");
   const [storyAsset, setStoryAsset] = useState<ExtractedStoryAsset | null>(null);
   const [xiaoguangOpen, setXiaoguangOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [failureStoryInput, setFailureStoryInput] = useState("");
 
   const progressIndex = useMemo(() => {
@@ -241,6 +242,7 @@ export function MvpShell() {
           ) : null}
           {view === "topics" ? (
             <TopicScreen
+              isGenerating={isGenerating}
               onBack={goBack}
               onNext={continueToContent}
               onSelect={setSelectedTopic}
@@ -480,6 +482,7 @@ function FailureStoryInputScreen({
 }
 
 function TopicScreen({
+  isGenerating,
   onBack,
   onNext,
   onSelect,
@@ -487,6 +490,7 @@ function TopicScreen({
   selected,
   topics,
 }: {
+  isGenerating: boolean;
   onBack: () => void;
   onNext: () => void;
   onSelect: (index: number) => void;
@@ -521,8 +525,8 @@ function TopicScreen({
           </button>
         ))}
       </div>
-      <button className="bottom-primary" onClick={onNext} type="button">
-        生成内容文案
+      <button className="bottom-primary" onClick={onNext} type="button" disabled={isGenerating}>
+        {isGenerating ? "小光正在整理你的第一条内容……" : "生成内容文案"}
       </button>
     </section>
   );
