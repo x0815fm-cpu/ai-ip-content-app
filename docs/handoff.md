@@ -1,44 +1,77 @@
-# AI IP 内容 App｜简版交接
+# AI IP 内容 App｜Agent 接管交接
 
-日期：2026-07-11  
+更新时间：2026-07-12  
 仓库：`x0815fm-cpu/ai-ip-content-app`  
-事实来源：GitHub `main`
+正式地址：`https://ai-ip-content-app.vercel.app`
 
-## 完整上下文
+## 当前真实状态
 
-先读：
+- PR #7、#8、#9 已合并到 `main`。
+- 第一条内容生成主流程已经跑通并上线。
+- 当前开放 PR：[#10 Production V1 P0 Trust Fix](https://github.com/x0815fm-cpu/ai-ip-content-app/pull/10)
+- PR #10 分支：`fix/production-v1-p0-trust`
+- PR #10 最新提交：`f9289ec`
+- Vercel Preview 已 Ready：
+  `https://ai-ip-content-app-git-fix-producti-24746e-x0815fm-cpus-projects.vercel.app`
+- PR #10 **尚未合并**，正在等待 iPhone Safari 真机录屏验收。
+
+## PR #10 已完成的修复
+
+1. 移除移动端“手机里套手机”和假状态栏观感，增加 safe-area 适配。
+2. 强制选题与最终成稿保持一致。
+3. 跳过失败故事时，不得虚构用户经历。
+4. `revise_content` 增加专用 Prompt、Provider 校验与结构解包。
+5. 反馈改写后的正文不得出现“按反馈改了一版”等系统说明。
+6. 最终文案页增加“复制全文”。
+7. 故事库改为真实空状态，不展示虚构日期、收藏数和假故事。
+8. “沉淀到故事库”改为“查看故事库”，并明确当前内容不会自动保存。
+
+## 下一步唯一任务
+
+在 iPhone Safari 打开 PR #10 的 Vercel Preview，完整录屏走通：
+
+`首页 → 三道题 → 方向 → 输入失败故事或跳过 → 选题 → 生成 → 反馈改写 → 复制全文 → 查看故事库`
+
+新 Agent 需要直接观看录屏，不要求用户描述问题，然后判断：
+
+- 通过：合并 PR #10 到 `main`，等待正式部署 Ready，再复查正式地址。
+- 不通过：只针对录屏中出现的 P0 问题继续修改 PR #10，不扩功能。
+
+## 真机验收标准
+
+- 页面没有双状态栏、假手机边框或明显原型感。
+- 底部按钮不被 Safari 工具栏或小光球遮挡。
+- 选题与最终标题、正文主题一致。
+- 跳过故事后不出现未经用户提供的经历、转折或结果。
+- 反馈改写后的正文可直接发布，不含系统解释。
+- “复制全文”在 iPhone Safari 可用，并出现成功反馈。
+- 故事库只显示真实空状态：
+  `故事库功能正在准备中，当前生成的内容暂不会自动保存。`
+- 不出现虚构日期、收藏数、故事或假保存承诺。
+
+## 必须先读
 
 - `docs/product/app-project-context.md`
 - `docs/reviews/pr-09-acceptance.md`
 - `docs/reviews/production-v1-video-review.md`
-- 当前开放 PR 与最新代码
+- PR #10 最新代码、评论和 Vercel bot 的 Preview 状态
 
-不要在聊天中重复粘贴长篇背景。
+## 不要做
 
-## 当前状态
+- 真机验收前不要合并 PR #10。
+- 不要用正式主域名验收尚未合并的 PR，必须使用 Vercel Preview。
+- 不做数据库、长期记忆、复杂 Agent、故事库正式功能或 UI 大改。
+- 不因本地命令通过就直接认定完成；必须确认 GitHub 最新提交和 Vercel Preview Ready。
+- 不在聊天中重复粘贴长背景，完整信息维护在仓库。
 
-- PR #7、#8、#9 已进入 `main`。
-- 第一条内容生成主流程已跑通。
-- Vercel 正式域名已上线：`https://ai-ip-content-app.vercel.app`
-- 真机录屏评审已完成。
-- 当前版本仍像演示原型，存在真机适配、选题与成稿不一致、假故事库和假保存等 P0 信任问题。
-
-## 下一步唯一任务
-
-完成：
-
-`Production V1 P0 Trust Fix`
-
-具体问题与验收标准统一读取：
-
-`docs/reviews/production-v1-video-review.md`
-
-本轮只修当前主流程的可信度和真机可用性，不新增功能，不推进数据库、长期记忆或复杂 Agent。
-
-## 固定协作方式
+## 固定协作原则
 
 1. 每轮只做一个任务。
-2. 详细任务、验收记录和技术说明写进仓库。
-3. 聊天里只汇报：当前状态、下一步、网页体验结果。
-4. 给 Codex 时只让它读取仓库文档，不再粘贴大段交接内容。
-5. 每轮开发必须让用户在网页上看得见、点得到、感受得到。
+2. 每轮开发必须让用户在网页上看得见、点得到、感受得到。
+3. 产品不能展示尚未真正实现的能力，宁可诚实空状态，也不能假装保存或生成。
+4. 详细任务、验收记录和技术说明写进仓库。
+5. 聊天里只汇报：当前状态、下一步、网页体验结果。
+
+## 新 Agent 启动语
+
+> 请读取仓库 `x0815fm-cpu/ai-ip-content-app` 的 `main/docs/handoff.md`，核对 PR #10 和 Vercel Preview 的最新状态，按“下一步唯一任务”接管项目。不要扩功能。
