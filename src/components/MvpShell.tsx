@@ -3,7 +3,6 @@
 import Image from "next/image";
 import {
   ArrowLeft,
-  Battery,
   BookOpen,
   BookText,
   BriefcaseBusiness,
@@ -25,12 +24,10 @@ import {
   Palette,
   PenLine,
   Search,
-  Signal,
   Sparkles,
   Star,
   Users,
   Video,
-  Wifi,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -38,7 +35,6 @@ import {
   flowSteps,
   mockDirections,
   mockGeneratedContent,
-  mockStoryCards,
   mockTopics,
   questions,
   storyCategories,
@@ -72,6 +68,7 @@ export function MvpShell() {
   const [storyAsset, setStoryAsset] = useState<ExtractedStoryAsset | null>(null);
   const [xiaoguangOpen, setXiaoguangOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const [failureStoryInput, setFailureStoryInput] = useState("");
 
   const progressIndex = useMemo(() => {
@@ -124,6 +121,20 @@ export function MvpShell() {
   function skipFailureStory() {
     setFailureStoryInput("");
     void continueToTopics("");
+  }
+
+
+  async function copyContent() {
+    const text = generatedContent.rows.map(row => `${row.label}\n${row.value}`).join('\n\n');
+    const fullText = text + '\n\n' + generatedContent.publishHint;
+    
+    try {
+      await navigator.clipboard.writeText(fullText);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   }
 
   async function continueToContent() {
@@ -209,10 +220,9 @@ export function MvpShell() {
   }
 
   return (
-    <main className="app-canvas">
-      <section className="phone-shell" aria-label="小光内容工作台">
-        <StatusBar />
-        <div className="phone-content">
+    <main className="app-canvas-mobile">
+      <section className="app-container" aria-label="小光内容工作台">
+        <div className="app-content">
           {view === "home" ? <HomeScreen onStart={startFlow} onStory={() => setView("story")} /> : null}
           {view === "questions" ? (
             <QuestionScreen
@@ -259,7 +269,9 @@ export function MvpShell() {
             <ContentScreen
               activeFeedback={activeFeedback}
               content={generatedContent}
+              isCopied={isCopied}
               onBack={goBack}
+              onCopy={copyContent}
               onFeedback={reviseContent}
               onStory={() => setView("story")}
             />
@@ -276,19 +288,6 @@ export function MvpShell() {
         />
       </section>
     </main>
-  );
-}
-
-function StatusBar() {
-  return (
-    <div className="status-bar">
-      <span>9:41</span>
-      <div className="flex items-center gap-1.5">
-        <Signal size={14} strokeWidth={2.4} />
-        <Wifi size={14} strokeWidth={2.4} />
-        <Battery size={17} strokeWidth={2.4} />
-      </div>
-    </div>
   );
 }
 
@@ -539,13 +538,17 @@ function TopicScreen({
 function ContentScreen({
   activeFeedback,
   content,
+  isCopied,
   onBack,
+  onCopy,
   onFeedback,
   onStory,
 }: {
   activeFeedback: string;
   content: GeneratedContent;
+  isCopied: boolean;
   onBack: () => void;
+  onCopy: () => void;
   onFeedback: (feedbackType: string) => void;
   onStory: () => void;
 }) {
@@ -582,7 +585,7 @@ function ContentScreen({
         )}
       </article>
       <div className="feedback-panel">
-        <p>{activeFeedback ? `已根据“${activeFeedback}”改写` : "这条内容怎么样？"}</p>
+        <p>{activeFeedback ? "已根据你的反馈改写" : "这条内容怎么样？"}</p>
         <div className="feedback-grid">
           {feedbackOptions.map((feedback) => (
             <button className={activeFeedback === feedback ? "active" : ""} key={feedback} onClick={() => onFeedback(feedback)} type="button">
@@ -591,9 +594,12 @@ function ContentScreen({
           ))}
         </div>
       </div>
+      <button className={`copy-button ${isCopied ? "copied" : ""}`} onClick={onCopy} type="button">
+        {isCopied ? "✓ 已复制" : "复制全文"}
+      </button>
       <button className="bottom-secondary" onClick={onStory} type="button">
         <Library size={17} />
-        沉淀到故事库
+        查看故事库
       </button>
     </section>
   );
@@ -605,7 +611,6 @@ function StoryScreen({ onBack }: { onBack: () => void }) {
       <ScreenHeader onBack={onBack} />
       <div className="story-title">
         <h2>我的故事库</h2>
-        <span>预览</span>
         <p>你的经历、想法与灵感，都会在这里沉淀</p>
       </div>
       <section className="story-board">
@@ -620,20 +625,11 @@ function StoryScreen({ onBack }: { onBack: () => void }) {
             </button>
           ))}
         </div>
-        <div className="story-list">
-          {mockStoryCards.map((card) => (
-            <article className="story-card" key={card.title}>
-              <div className="story-card-head">
-                <h4>{card.title}</h4>
-                <time>{card.date}</time>
-              </div>
-              <p>{card.summary}</p>
-              <div className="story-card-foot">
-                <span>{card.tag}</span>
-                <span>☆ {card.count}</span>
-              </div>
-            </article>
-          ))}
+        <div className="story-list story-list-empty">
+          <div className="story-empty-state">
+            <p>这里还没有内容</p>
+            <p className="story-empty-hint">故事库功能正在准备中，当前生成的内容暂不会自动保存。</p>
+          </div>
         </div>
       </section>
       <div className="story-quote">每一次记录，都是在为未来的你积累力量。</div>
